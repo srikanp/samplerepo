@@ -1,0 +1,25 @@
+pipeline {
+      agent any
+        options { 
+                  disableConcurrentBuilds() 
+                        
+                }
+
+stages {
+  stage('Example Build') {
+              steps {
+                        sh 'echo "Example Build"'
+                                     
+	            }
+                 }
+   stage('Completion of the build') {
+               steps {
+										                                                                 				sh """
+												                                                                         				echo "End of the build"
+												                                                                                         				echo "It was successful"
+										                                                                                                                 				echo "Job is exiting......."
+										                                                                                                                             				"""
+		}
+              }
+          }
+}
