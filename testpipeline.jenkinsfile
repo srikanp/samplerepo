@@ -14,7 +14,7 @@ stages {
 stage('Read Jenkinsfile') {
       when {
         expression {
-          return params.refresh == true || params.user_email == ""
+          return params.refresh == true
         }
       }
       steps {
