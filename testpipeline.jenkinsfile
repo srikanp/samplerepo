@@ -22,12 +22,22 @@ stage('Read Jenkinsfile') {
       }
     }
   stage('Example Build') {
+    when {
+        expression {
+          return params.refresh == false
+        }
+      }
               steps {
                         sh 'echo "Example Build"'
                                      
 	            }
                  }
    stage('Completion of the build') {
+    when {
+        expression {
+          return params.refresh == false
+        }
+      }
                steps {
 										                                                                 				sh """
 												                                                                         				echo "End of the build"
