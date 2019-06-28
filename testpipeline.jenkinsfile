@@ -1,18 +1,33 @@
-pipeline {
-      agent any
-        options { 
-                  disableConcurrentBuilds() 
-                        
-                }
+def getCloudRegions() {
+  // Environmental variables are passed specifically for the test environment, this
+  // must be set
+  def changeProjectProcess = ["python", "manage.py", "runscript", "set-environment",
+    "--script-args", "environment=test"].execute(null, new File("/root/saas_portal"))
+  changeProjectProcess.waitForOrKill(100000)
 
-parameters {
-    booleanParam(name: 'refresh', defaultValue: false, description: 'Read Jenkinsfile and exit.')
-    string(name: 'deployment', description:  'What is the deployment name?')
+  def process = ["/root/google-cloud-sdk/bin/gcloud", "compute", "regions",
+    "list", "--format=table[no-heading](NAME)"].execute()
+  process.waitForOrKill(10000)
+  return process.in.text.trim()
 }
 
-stages {
+def regionChoices = getCloudRegions()
 
-stage('Read Jenkinsfile') {
+pipeline {
+agent any
+    options {
+      disableConcurrentBuilds()
+    }
+
+  parameters {
+    booleanParam(name: 'refresh', defaultValue: false, description: 'Read Jenkinsfile and exit.')
+    string(name: 'deployment', description:  'What is the deployment name?')
+    choice(choices: regionChoices, name: 'region', description: 'What is the region name?')
+    choice(choices: 'test\nprod', name: 'environment', description: 'What environment type?')
+  }
+
+  stages {
+    stage('Read Jenkinsfile') {
       when {
         expression {
           return params.refresh == true
@@ -22,30 +37,22 @@ stage('Read Jenkinsfile') {
         echo("Ended pipeline early.")
       }
     }
-  stage('Example Build') {
-    when {
+    stage('Get administrative password') {
+      when {
         expression {
           return params.refresh == false
         }
       }
-              steps {
-                        sh 'echo "Example Build"'
-                                     
-	            }
-                 }
-   stage('Completion of the build') {
-    when {
-        expression {
-          return params.refresh == false
-        }
+      steps {
+          echo "Successfully finished"
       }
-               steps {
-										                                                                 				sh """
-												                                                                         				echo "${params.deployment}"
-												                                                                                         				echo "It was successful"
-										                                                                                                                 				echo "Job is exiting......."
-										                                                                                                                             				"""
-		}
-              }
-          }
+    }
+  }
+
+  post {
+    always {
+      cleanWs()
+      sh "rm -rf /tmp/*"
+    }
+  }
 }
